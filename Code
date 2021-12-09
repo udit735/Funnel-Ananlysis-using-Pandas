@@ -1,0 +1,59 @@
+import pandas as pd
+
+visits = pd.read_csv('visits.csv',
+                     parse_dates=[1])
+cart = pd.read_csv('cart.csv',
+                   parse_dates=[1])
+checkout = pd.read_csv('checkout.csv',
+                       parse_dates=[1])
+purchase = pd.read_csv('purchase.csv',
+                       parse_dates=[1])
+# print(visits.head())
+# print(cart.head())
+# print(checkout.head())
+# print(purchase.head())
+
+# Merging visits and carts using 'left' to identify all users who visit and match with how many who added product to cart
+visits_cart_left = pd.merge(visits, cart, how = 'left')
+# print(visits_cart_left)
+# Total users who visited the site
+# print(len(visits_cart_left))
+visits_cart_left_count = len(visits_cart_left)
+# Calculating number of null timestamps for cart to know users who visited the page but not added anything to the cart
+users_who_visit_not_cart = visits_cart_left[visits_cart_left.cart_time.isnull()]
+# print(users_who_visit_not_cart)
+# print(len(users_who_visit_not_cart))
+users_who_visit_not_cart_count = len(users_who_visit_not_cart)
+print(float(users_who_visit_not_cart_count)/visits_cart_left_count*100)
+
+# Merging carts and checkout using 'left' to identify all users who cart and match with how many who added product to checkout, repeating the whole process
+
+cart_checkout_left = pd.merge(cart, checkout, how = 'left')
+cart_checkout_left_count = len(cart_checkout_left)
+# print(cart_checkout_left)
+# print(cart_checkout_left_count)
+user_who_cart_not_checkout = cart_checkout_left[cart_checkout_left.checkout_time.isnull()]
+user_who_cart_not_checkout_count = len(user_who_cart_not_checkout)
+# print(user_who_cart_not_checkout)
+# print(user_who_cart_not_checkout_count)
+
+print(float(user_who_cart_not_checkout_count)/cart_checkout_left_count*100)
+
+# Merging all data on similar lines
+all_data = visits.merge(cart, how = 'left').merge(checkout, how = 'left').merge(purchase, how = 'left')
+# print(all_data.head())
+
+checkout_count = all_data[~all_data.checkout_time.isnull()]
+# print(checkout_count)
+total_checkout = len(checkout_count)
+# print(total_checkout)
+checkout_count_not_purchase = checkout_count[checkout_count.purchase_time.isnull()]
+# print(checkout_count_not_purchase)
+checkout_not_purchase_count = len(checkout_count_not_purchase)
+# print(checkout_not_purchase_count)
+
+print(float(checkout_not_purchase_count)/total_checkout*100)
+
+all_data['time_to_purchase'] = all_data.purchase_time - all_data.visit_time
+print(all_data.time_to_purchase)
+print(all_data.time_to_purchase.mean())
